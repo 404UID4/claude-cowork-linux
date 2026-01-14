@@ -21,9 +21,9 @@
 
 ## ![](.github/assets/icons/info-32x32.png) Overview
 
-Claude Cowork is a premium feature in Claude Desktop ($200/month Max subscription) that provides a local AI coding assistant with file access and terminal execution capabilities. It's officially **macOS-only**, using Apple's Virtualization Framework to run a sandboxed Linux VM.
+Claude Cowork is a special version of Claude Desktop that provides an agentic AI assistant — point it at a folder and it works autonomously on your files, organizing, creating, and modifying documents while you focus on other things. It's officially **macOS-only**, using Apple's Virtualization Framework to run a sandboxed Linux VM.
 
-This project enables Cowork on Linux by:
+**This project brings Cowork to Linux** by:
 
 | Step | Description |
 |:-----|:------------|
