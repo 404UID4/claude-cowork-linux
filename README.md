@@ -94,7 +94,7 @@ The installer will:
 
 ### Path Translation
 
-The stub transparently translates VM paths to host paths:
+The stub translates VM paths to host paths:
 
 | VM Path | Host Path |
 |:--------|:----------|
