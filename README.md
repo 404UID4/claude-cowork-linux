@@ -26,7 +26,7 @@ Claude Cowork is a special Claude Desktop build that works inside a folder you p
 
 | Step | Description |
 |:-----|:------------|
-| ![](.github/assets/icons/script.png) **Stubbing** | Replace the native Swift addon (`@ant/claude-swift`) with JavaScript |
+| ![](.github/assets/icons/script.png) **Stubbing** | Replace macOS-only native modules (`@ant/claude-swift`, `@ant/claude-native`) with JavaScript |
 | ![](.github/assets/icons/console.png) **Direct Execution** | Run the Claude Code binary directly (no VM needed—we're already on Linux!) |
 | ![](.github/assets/icons/folder.png) **Path Translation** | Convert VM paths to host paths transparently |
 | ![](.github/assets/icons/lock.png) **Platform Spoofing** | Send macOS headers so the server enables the feature |
@@ -97,6 +97,10 @@ The installer will:
 │  ├── vm.kill() → Kills spawned processes                        │
 │  └── vm.writeStdin() → Writes to process stdin                  │
 ├─────────────────────────────────────────────────────────────────┤
+│  @ant/claude-native (STUBBED)                                   │
+│  ├── AuthRequest → Opens system browser (xdg-open)              │
+│  └── Platform helpers → Minimal compatibility shims             │
+├─────────────────────────────────────────────────────────────────┤
 │  Claude Code Binary                                             │
 │  └── ~/.config/Claude/claude-code-vm/2.1.5/claude (ELF x86_64) │
 └─────────────────────────────────────────────────────────────────┘
@@ -160,7 +164,14 @@ Key insight: The app calls `Si()` which returns `module.default.vm`, so methods 
 </details>
 
 <details>
-<summary><strong>4. Direct Execution</strong></summary>
+<summary><strong>4. Native Utilities Stub</strong></summary>
+
+The app also expects `@ant/claude-native` (a macOS-specific native module). Our stub provides minimal compatibility so the app can start on Linux. For example, OAuth flows fall back to opening the system browser via `xdg-open`.
+
+</details>
+
+<details>
+<summary><strong>5. Direct Execution</strong></summary>
 
 On macOS, Cowork runs a Linux VM. On Linux, we skip the VM entirely and run the Claude Code binary directly on the host. This is actually simpler and faster!
 

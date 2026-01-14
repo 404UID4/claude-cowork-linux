@@ -41,7 +41,7 @@ SESSION_START=$(date '+%Y-%m-%d %H:%M:%S')
 export ELECTRON_ENABLE_LOGGING=1
 
 # Clear trace log for fresh session
-> /tmp/claude-swift-trace.log 2>/dev/null
+: > "$LOG_DIR/claude-swift-trace.log" 2>/dev/null || true
 
 # Run with logging - stderr to log, stdout to both terminal and log
 exec "$ELECTRON" "$APP_DIR" \
