@@ -344,6 +344,9 @@ Ensure the stub has methods on the `this.vm` object, not just the class.
 ### Enable Debug Logging
 
 ```bash
+# Include Claude Code stdout/stderr in the trace log (redacted, but still treat logs as sensitive)
+export CLAUDE_COWORK_TRACE_IO=1
+
 # Clear old logs
 rm -f ~/.local/share/claude-cowork/logs/claude-swift-trace.log
 

@@ -1,5 +1,6 @@
 # Extracted Claude Desktop app (proprietary - do not commit)
 app/
+*.dmg
 
 # Node modules
 node_modules/

@@ -42,16 +42,42 @@ try {
   fs.mkdirSync(LOG_DIR, { recursive: true, mode: 0o700 });
 } catch (e) {}
 
+const TRACE_IO = process.env.CLAUDE_COWORK_TRACE_IO === '1';
+
+function redactForLogs(input) {
+  let text = String(input);
+
+  // Common header / token formats
+  text = text.replace(/(Authorization:\s*Bearer)\s+[^\s]+/gi, '$1 [REDACTED]');
+  text = text.replace(/(Bearer)\s+[A-Za-z0-9._-]+/g, '$1 [REDACTED]');
+
+  // JSON-style secrets
+  text = text.replace(/("authorization"\s*:\s*")[^"]+(")/gi, '$1[REDACTED]$2');
+  text = text.replace(/("api[_-]?key"\s*:\s*")[^"]+(")/gi, '$1[REDACTED]$2');
+  text = text.replace(/("access[_-]?token"\s*:\s*")[^"]+(")/gi, '$1[REDACTED]$2');
+  text = text.replace(/("refresh[_-]?token"\s*:\s*")[^"]+(")/gi, '$1[REDACTED]$2');
+
+  // Env var leakage
+  text = text.replace(/(ANTHROPIC_API_KEY=)[^\s]+/g, '$1[REDACTED]');
+
+  // Cookies
+  text = text.replace(/(cookie:\s*)[^\n\r]+/gi, '$1[REDACTED]');
+
+  return text;
+}
+
 function trace(msg) {
   const ts = new Date().toISOString();
-  const line = `[${ts}] ${msg}\n`;
-  console.log('[TRACE] ' + msg);
+  const safeMsg = redactForLogs(msg);
+  const line = `[${ts}] ${safeMsg}\n`;
+  console.log('[TRACE] ' + safeMsg);
   try {
     // SECURITY: Append with restrictive permissions
     fs.appendFileSync(TRACE_FILE, line, { mode: 0o600 });
   } catch(e) {}
 }
 trace("=== MODULE LOADING ===");
+trace("Trace IO logging: " + (TRACE_IO ? "enabled (CLAUDE_COWORK_TRACE_IO=1)" : "disabled"));
 
 // SECURITY: Allowlist of environment variables to pass to spawned process
 const ENV_ALLOWLIST = [
@@ -514,7 +540,9 @@ class SwiftAddonStub extends EventEmitter {
           stdoutBuffer = lines.pop();
           for (const line of lines) {
             if (line.trim() && self._onStdout) {
-              trace('stdout line: ' + line.substring(0, 100) + '...');
+              if (TRACE_IO) {
+                trace('stdout line: ' + line.substring(0, 200) + (line.length > 200 ? '...' : ''));
+              }
               self._onStdout(id, line + '\n');
             }
           }
@@ -527,7 +555,9 @@ class SwiftAddonStub extends EventEmitter {
           stderrBuffer = lines.pop();
           for (const line of lines) {
             if (line.trim() && self._onStderr) {
-              trace('stderr line: ' + line.substring(0, 100) + '...');
+              if (TRACE_IO) {
+                trace('stderr line: ' + line.substring(0, 200) + (line.length > 200 ? '...' : ''));
+              }
               self._onStderr(id, line + '\n');
             }
           }
