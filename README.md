@@ -28,12 +28,12 @@ Claude Cowork is a special Claude Desktop build that works inside a folder you p
 |:-----|:------------|
 | ![](.github/assets/icons/script-24x24.png) **Stubbing** | Replace macOS-only native modules (`@ant/claude-swift`, `@ant/claude-native`) with JavaScript |
 | ![](.github/assets/icons/console-24x24.png) **Direct Execution** | Run the Claude Code binary directly (no VM needed—we're already on Linux!) |
-| ![](.github/assets/icons/folder-24x24.png) **Path Translation** | Convert VM paths to host paths transparently |
-| ![](.github/assets/icons/lock-24x24.png) **Platform Spoofing** | Send macOS headers so the server enables the feature |
+| ![](.github/assets/icons/translation-24x24.png) **Path Translation** | Convert VM paths to host paths transparently |
+| ![](.github/assets/icons/platform-24x24.png) **Platform Spoofing** | Send macOS headers so the server enables the feature |
 
 ---
 
-## ![](.github/assets/icons/alert-24x24.png) Status
+## ![](.github/assets/icons/status-24x24.png) Status
 
 - **Unofficial research preview**: This is reverse-engineered and may break when Claude Desktop updates.
 - **Linux support**: Currently targets **Linux x86_64 + X11** (Wayland support is not implemented).
@@ -79,7 +79,7 @@ The installer will:
 
 ---
 
-## ![](.github/assets/icons/settings-24x24.png) Architecture
+## ![](.github/assets/icons/architecture-24x24.png) Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -120,7 +120,7 @@ The stub translates VM paths to host paths:
 
 ---
 
-## ![](.github/assets/icons/key.png) How It Works
+## ![](.github/assets/icons/how-it-works-24x24.png) How It Works
 
 <details>
 <summary><strong>1. Platform Spoofing</strong></summary>
