@@ -112,6 +112,200 @@ function isPathSafe(basePath, targetPath) {
 // Sessions directory in user space (not /sessions)
 const SESSIONS_BASE = path.join(os.homedir(), '.local/share/claude-cowork/sessions');
 
+/**
+ * Create mount symlinks for a session
+ *
+ * The additionalMounts object contains mount mappings:
+ * {
+ *   "mountName": { path: "relative/path/from/homedir", mode: "rw"|"ro" }
+ * }
+ *
+ * We create symlinks at:
+ *   ~/.local/share/claude-cowork/sessions/<session>/mnt/<mountName>
+ * Pointing to:
+ *   ~/<additionalMounts[mountName].path>
+ *
+ * Special cases:
+ *   - Empty path ("") means homedir itself
+ *   - "uploads" is a directory, not a symlink
+ *   - "outputs" is typically handled separately
+ */
+function createMountSymlinks(sessionName, additionalMounts) {
+  trace('=== CREATE MOUNT SYMLINKS ===');
+  trace('Session name: ' + sessionName);
+  trace('additionalMounts: ' + JSON.stringify(additionalMounts, null, 2));
+
+  if (!sessionName) {
+    trace('ERROR: No session name provided, cannot create mounts');
+    return false;
+  }
+
+  if (!additionalMounts || typeof additionalMounts !== 'object') {
+    trace('WARNING: No additionalMounts provided or invalid format');
+    return false;
+  }
+
+  const sessionDir = path.join(SESSIONS_BASE, sessionName);
+  const mntDir = path.join(sessionDir, 'mnt');
+
+  trace('Session directory: ' + sessionDir);
+  trace('Mount directory: ' + mntDir);
+
+  // Create session and mnt directories
+  try {
+    if (!fs.existsSync(sessionDir)) {
+      fs.mkdirSync(sessionDir, { recursive: true, mode: 0o700 });
+      trace('Created session directory: ' + sessionDir);
+    }
+    if (!fs.existsSync(mntDir)) {
+      fs.mkdirSync(mntDir, { recursive: true, mode: 0o700 });
+      trace('Created mnt directory: ' + mntDir);
+    }
+  } catch (e) {
+    trace('ERROR creating directories: ' + e.message);
+    return false;
+  }
+
+  // Create symlinks for each mount
+  const mountEntries = Object.entries(additionalMounts);
+  trace('Processing ' + mountEntries.length + ' mount entries');
+
+  for (const [mountName, mountInfo] of mountEntries) {
+    trace('--- Processing mount: ' + mountName + ' ---');
+    trace('  Mount info: ' + JSON.stringify(mountInfo));
+
+    const mountPoint = path.join(mntDir, mountName);
+
+    // Handle special cases
+    if (mountName === 'uploads') {
+      // uploads is a directory, not a symlink
+      try {
+        if (!fs.existsSync(mountPoint)) {
+          fs.mkdirSync(mountPoint, { recursive: true, mode: 0o700 });
+          trace('  Created uploads directory: ' + mountPoint);
+        } else {
+          trace('  Uploads directory already exists: ' + mountPoint);
+        }
+      } catch (e) {
+        trace('  ERROR creating uploads directory: ' + e.message);
+      }
+      continue;
+    }
+
+    // Get the host path from the mount info
+    let relativePath = '';
+    if (typeof mountInfo === 'object' && mountInfo !== null) {
+      relativePath = mountInfo.path || '';
+    } else if (typeof mountInfo === 'string') {
+      relativePath = mountInfo;
+    }
+
+    // Construct the full host path
+    // Empty path means homedir itself
+    const hostPath = relativePath === ''
+      ? os.homedir()
+      : path.join(os.homedir(), relativePath);
+
+    trace('  Relative path: "' + relativePath + '"');
+    trace('  Host path: ' + hostPath);
+    trace('  Mount point: ' + mountPoint);
+
+    // Verify host path exists
+    if (!fs.existsSync(hostPath)) {
+      trace('  WARNING: Host path does not exist: ' + hostPath);
+      // Try to create it for output directories
+      if (mountName === 'outputs' || mountInfo.mode === 'rw') {
+        try {
+          fs.mkdirSync(hostPath, { recursive: true, mode: 0o700 });
+          trace('  Created host directory: ' + hostPath);
+        } catch (e) {
+          trace('  ERROR creating host directory: ' + e.message);
+          continue;
+        }
+      } else {
+        continue;
+      }
+    }
+
+    // Create symlink (remove existing if present)
+    try {
+      if (fs.existsSync(mountPoint)) {
+        const stats = fs.lstatSync(mountPoint);
+        if (stats.isSymbolicLink()) {
+          const existingTarget = fs.readlinkSync(mountPoint);
+          if (existingTarget === hostPath) {
+            trace('  Symlink already exists and points to correct target');
+            continue;
+          }
+          trace('  Removing existing symlink (pointed to: ' + existingTarget + ')');
+          fs.unlinkSync(mountPoint);
+        } else if (stats.isDirectory()) {
+          trace('  Mount point is a directory, skipping symlink creation');
+          continue;
+        } else {
+          trace('  Removing existing file at mount point');
+          fs.unlinkSync(mountPoint);
+        }
+      }
+
+      fs.symlinkSync(hostPath, mountPoint);
+      trace('  SUCCESS: Created symlink ' + mountPoint + ' -> ' + hostPath);
+    } catch (e) {
+      trace('  ERROR creating symlink: ' + e.message);
+    }
+  }
+
+  // Log final directory structure
+  trace('=== FINAL MOUNT STRUCTURE ===');
+  try {
+    const entries = fs.readdirSync(mntDir, { withFileTypes: true });
+    for (const entry of entries) {
+      const entryPath = path.join(mntDir, entry.name);
+      if (entry.isSymbolicLink()) {
+        const target = fs.readlinkSync(entryPath);
+        trace('  ' + entry.name + ' -> ' + target);
+      } else if (entry.isDirectory()) {
+        trace('  ' + entry.name + '/ (directory)');
+      } else {
+        trace('  ' + entry.name + ' (file)');
+      }
+    }
+  } catch (e) {
+    trace('  ERROR listing mnt directory: ' + e.message);
+  }
+  trace('=== END MOUNT SYMLINKS ===');
+
+  return true;
+}
+
+/**
+ * Extract session name from spawn arguments or process name
+ * The session name is used in paths like /sessions/<sessionName>/mnt/...
+ */
+function extractSessionName(processName, args) {
+  // First try to extract from args (look for /sessions/<name>/ pattern)
+  if (args && Array.isArray(args)) {
+    for (const arg of args) {
+      if (typeof arg === 'string') {
+        const match = arg.match(/\/sessions\/([^\/]+)\//);
+        if (match) {
+          trace('Extracted session name from args: ' + match[1]);
+          return match[1];
+        }
+      }
+    }
+  }
+
+  // Fall back to process name
+  if (processName) {
+    trace('Using process name as session name: ' + processName);
+    return processName;
+  }
+
+  trace('WARNING: Could not determine session name');
+  return null;
+}
+
 class SwiftAddonStub extends EventEmitter {
   constructor() {
     super();
@@ -412,9 +606,37 @@ class SwiftAddonStub extends EventEmitter {
 
       /**
        * Spawn a process - This is called to launch the Claude Code binary
+       *
+       * Parameters (reverse-engineered from Claude Desktop):
+       *   id: string - unique process identifier
+       *   processName: string - human-readable name (e.g., "stoic-busy-hawking")
+       *   command: string - command to run (e.g., "/usr/local/bin/claude")
+       *   args: string[] - command arguments
+       *   options: object - spawn options (cwd, etc.)
+       *   envVars: object - environment variables
+       *   additionalMounts: object - mount mappings { mountName: { path, mode } }
+       *   isResume: boolean - whether resuming an existing session
+       *   allowedDomains: string[] - allowed network domains
+       *   sharedCwdPath: string - shared working directory path
        */
       spawn: (id, processName, command, args, options, envVars, additionalMounts, isResume, allowedDomains, sharedCwdPath) => {
-        trace('vm.spawn() id=' + id + ' cmd=' + command + ' args=' + JSON.stringify(args));
+        trace('=== VM.SPAWN CALLED ===');
+        trace('vm.spawn() id=' + id);
+        trace('vm.spawn() processName=' + processName);
+        trace('vm.spawn() command=' + command);
+        trace('vm.spawn() args=' + JSON.stringify(args));
+        trace('vm.spawn() additionalMounts=' + JSON.stringify(additionalMounts));
+        trace('vm.spawn() isResume=' + isResume);
+        trace('vm.spawn() sharedCwdPath=' + sharedCwdPath);
+
+        // Extract session name and create mount symlinks BEFORE translating paths
+        const sessionName = extractSessionName(processName, args);
+        if (sessionName && additionalMounts) {
+          trace('Creating mount symlinks for session: ' + sessionName);
+          createMountSymlinks(sessionName, additionalMounts);
+        } else {
+          trace('Skipping mount symlink creation: sessionName=' + sessionName + ', hasAdditionalMounts=' + !!additionalMounts);
+        }
 
         // SECURITY: Validate command is the expected Claude binary
         let hostCommand = command;

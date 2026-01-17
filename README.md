@@ -93,7 +93,7 @@ The installer will:
 │  @ant/claude-swift (STUBBED)                                    │
 │  ├── vm.setEventCallbacks() → Register process event handlers   │
 │  ├── vm.startVM() → No-op (we're already on Linux)              │
-│  ├── vm.spawn() → Spawns real processes via child_process       │
+│  ├── vm.spawn() → Creates mount symlinks, spawns processes      │
 │  ├── vm.kill() → Kills spawned processes                        │
 │  └── vm.writeStdin() → Writes to process stdin                  │
 ├─────────────────────────────────────────────────────────────────┤
@@ -114,6 +114,20 @@ The stub translates VM paths to host paths:
 |:--------|:----------|
 | `/usr/local/bin/claude` | `~/.config/Claude/claude-code-vm/2.1.5/claude` |
 | `/sessions/...` | `~/.local/share/claude-cowork/sessions/...` |
+
+### Mount Symlinks
+
+When you select a folder in Cowork, the stub creates symlinks to make it accessible at the expected VM path:
+
+```
+~/.local/share/claude-cowork/sessions/<session-name>/mnt/
+├── <folder>  → /home/user/path/to/selected/folder (symlink)
+├── .claude   → ~/.config/Claude/.../session/.claude (symlink)
+├── .skills   → ~/.config/Claude/.../skills-plugin/... (symlink)
+└── uploads/  (directory for file uploads)
+```
+
+The `additionalMounts` parameter from Claude Desktop provides the mapping between mount names and host paths.
 
 > [!NOTE]
 > The Claude Code binary expects `/sessions` to exist. `install.sh` creates `/sessions` as a symlink into `~/.local/share/claude-cowork/sessions` (requires `sudo` once) so you don't need a world-writable root directory.
