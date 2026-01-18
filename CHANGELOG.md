@@ -29,11 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Sessions failed because mount points at `/sessions/<session>/mnt/<folder>` didn't exist
   - Now properly creates symlinks to user's actual directories before spawning Claude binary
 
-### Known Limitations
-- Folder selection dropdown doesn't update immediately after selecting a new folder
-  - Folder is stored correctly and sessions work as expected
-  - **Workaround**: Press `Ctrl+R` to refresh after selecting a folder
-
 ### Security
 - Path traversal protection in file read/write operations
 - Secure directory creation with 0o700 permissions

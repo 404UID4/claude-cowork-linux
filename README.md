@@ -306,6 +306,26 @@ npm install electron
 ## ![](.github/assets/icons/warning-24x24.png) Troubleshooting
 
 <details>
+<summary><strong>Verify patches were applied</strong></summary>
+
+Check that all 3 patches are present in `app/.vite/build/index.js`:
+
+```bash
+# 1. Platform support (Ege function)
+grep -q 'if(process.platform==="linux")return{status:"supported"}' app/.vite/build/index.js && echo "✓ Patch 1" || echo "✗ Patch 1 missing"
+
+# 2. IPC origin validation (Q7 function)
+grep -q 'process.platform==="linux"' app/.vite/build/index.js && echo "✓ Patch 2" || echo "✗ Patch 2 missing"
+
+# 3. Extensions/connectors ($n variable)
+grep -q '\$n=process.platform==="darwin"||process.platform==="linux"' app/.vite/build/index.js && echo "✓ Patch 3" || echo "✗ Patch 3 missing"
+```
+
+If any patches are missing, run `./install.sh` again.
+
+</details>
+
+<details>
 <summary><strong>EACCES: permission denied, mkdir '/sessions'</strong></summary>
 
 Create a symlink to user space instead of a world-writable directory:

@@ -1,35 +1,16 @@
 # Known Issues
 
-## Folder Selection Dropdown Doesn't Update
-
-**Status**: Known limitation
-**Severity**: Low (cosmetic only)
-
-### Description
-
-After selecting a new folder, the dropdown continues to display the previously selected folder name.
-
-**Important**: The folder is stored correctly and sessions work as expected. This is only a UI display issue.
-
-### Workaround
-
-Press `Ctrl+R` or `F5` to refresh the page after selecting a folder.
-
----
-
 ## Safe Storage Encryption Warning
 
 **Message**: `Electron safeStorage encryption is not available on this system`
 
-**Impact**: Low - allowlist cache can't be encrypted
-
-**Workaround**: None needed
+**Impact**: Low - allowlist cache can't be encrypted. Does not affect functionality.
 
 ---
 
 ## Reporting Issues
 
-If you encounter other issues:
+If you encounter issues:
 
 1. Check `~/.config/Claude/logs/main.log`
 2. Check `~/.local/share/claude-cowork/logs/claude-swift-trace.log`
