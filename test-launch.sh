@@ -2,7 +2,9 @@
 # Test launcher for claude-cowork-linux
 # Uses the AppImage's electron with repacked asar (the approach that worked)
 
-cd /home/zack/dev/claude-cowork-linux
+# Change to script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 ASAR_FILE="squashfs-root/usr/lib/node_modules/electron/dist/resources/app.asar"
 STUB_FILE="linux-app-extracted/node_modules/@ant/claude-swift/js/index.js"

@@ -43,7 +43,6 @@ try {
   process.env.TEMP = vmTmpDir;
 
   // CRITICAL: Patch os.tmpdir() directly - it may have cached /tmp already
-  const originalTmpdir = os.tmpdir;
   os.tmpdir = function() {
     return vmTmpDir;
   };
@@ -197,9 +196,8 @@ os.arch = function() {
   return 'arm64';
 };
 
-const originalGetSystemVersion = process.getSystemVersion;
 process.getSystemVersion = function() {
-  return '14.0.0'; // Always return macOS version
+  return '14.0.0'; // Always return macOS version for compatibility
 };
 
 console.log('[Platform] Spoofing: darwin/arm64 macOS 14.0 (immediate)');
@@ -237,7 +235,7 @@ function loadSwiftStub() {
 // Store patched electron for reuse
 let patchedElectron = null;
 
-Module._load = function(request, parent, isMain) {
+Module._load = function(request, _parent, _isMain) {
   // Skip interception if we're loading the stub itself
   if (loadingStub) {
     return originalLoad.apply(this, arguments);
@@ -499,12 +497,12 @@ registerEipcHandler('ClaudeVM_$_getSupportStatus', async () => ({
 // ===== LocalAgentMode / Cowork sessions =====
 registerEipcHandler('LocalAgentModeSessions_$_getAll', async () => []);
 
-registerEipcHandler('LocalAgentModeSessions_$_create', async (event, sessionData) => ({
+registerEipcHandler('LocalAgentModeSessions_$_create', async (_event, sessionData) => ({
   id: `session-${Date.now()}`,
   ...sessionData,
 }));
 
-registerEipcHandler('LocalAgentModeSessions_$_get', async (event, sessionId) => ({
+registerEipcHandler('LocalAgentModeSessions_$_get', async (_event, sessionId) => ({
   id: sessionId,
   status: 'active',
 }));
@@ -535,12 +533,12 @@ registerEipcHandler('DesktopIntl_$_getInitialLocale', () => {
   };
 }, true); // SYNC
 
-registerEipcHandler('DesktopIntl_$_requestLocaleChange', async (event, locale) => ({
+registerEipcHandler('DesktopIntl_$_requestLocaleChange', async (_event, _locale) => ({
   success: true,
 }));
 
 // ===== WindowControl =====
-registerEipcHandler('WindowControl_$_setThemeMode', async (event, mode) => ({
+registerEipcHandler('WindowControl_$_setThemeMode', async (_event, _mode) => ({
   success: true,
 }));
 
@@ -575,7 +573,7 @@ try {
 } catch (e) { /* ignore duplicates */ }
 
 try {
-  ipcMain.handle('connect-to-mcp-server', async (event, serverName) => {
+  ipcMain.handle('connect-to-mcp-server', async (_event, serverName) => {
     console.log('[IPC] connect-to-mcp-server:', serverName);
     return { connected: false, error: 'Not implemented in Linux stub' };
   });

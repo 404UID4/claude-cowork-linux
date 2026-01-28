@@ -216,7 +216,7 @@ const vm = createEmitterObject('vm', {
     const vmSessionPath = `/sessions/${processName}`;
 
     // Network enabled by default, can be isolated for testing
-    const isolateNetwork = process.env.CLAUDE_ISOLATE_NETWORK === 'true';
+    const isolateNetwork = ['true', '1'].includes(process.env.CLAUDE_ISOLATE_NETWORK);
 
     const bwrapArgs = [
       // User namespace isolation
@@ -531,9 +531,9 @@ function translateVmPathToHost(vmPath) {
       const mountName = parts[mntIdx + 1];
       const rest = parts.slice(mntIdx + 2).join('/');
 
-      // Common mount mappings
+      // Common mount mappings - mount name matches current user's username
       const username = os.userInfo().username;
-      if (mountName === username || mountName === 'zack') {
+      if (mountName === username) {
         return rest ? path.join(os.homedir(), rest) : os.homedir();
       }
       if (mountName === '.claude') {
