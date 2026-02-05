@@ -547,6 +547,10 @@ export ELECTRON_ENABLE_LOGGING=1
 # Wayland support for Hyprland, Sway, and other Wayland compositors
 if [[ -n "$WAYLAND_DISPLAY" ]] || [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
   export ELECTRON_OZONE_PLATFORM_HINT=wayland
+  desktop_env="${XDG_CURRENT_DESKTOP:-}${XDG_SESSION_DESKTOP:-}${DESKTOP_SESSION:-}"
+  if [[ "${desktop_env,,}" == *kde* ]] || [[ "${desktop_env,,}" == *plasma* ]]; then
+    ELECTRON_ARGS+=("--enable-features=WaylandWindowDecorations")
+  fi
 fi
 
 # Launch Electron

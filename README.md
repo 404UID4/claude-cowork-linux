@@ -36,7 +36,7 @@ Claude Cowork is a special Claude Desktop build that works inside a folder you p
 ## ![](.github/assets/icons/status-24x24.png) Status
 
 - **Unofficial research preview**: This is reverse-engineered and may break when Claude Desktop updates.
-- **Linux support**: Currently targets **Linux x86_64 + X11** (Wayland support is not implemented).
+- **Linux support**: **Linux x86_64 + X11 or Wayland**, including Fedora 43 KDE/Wayland.
 - **Access**: Requires your own Claude Desktop DMG and an account with Cowork enabled.
 
 ---

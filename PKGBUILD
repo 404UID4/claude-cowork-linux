@@ -121,13 +121,20 @@ package() {
 #!/bin/bash
 # Claude Cowork Linux launcher
 
+# Extra Electron args
+ELECTRON_ARGS=()
+
 # Wayland support
 if [[ -n "$WAYLAND_DISPLAY" ]] || [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
     export ELECTRON_OZONE_PLATFORM_HINT=wayland
+    desktop_env="${XDG_CURRENT_DESKTOP:-}${XDG_SESSION_DESKTOP:-}${DESKTOP_SESSION:-}"
+    if [[ "${desktop_env,,}" == *kde* ]] || [[ "${desktop_env,,}" == *plasma* ]]; then
+        ELECTRON_ARGS+=("--enable-features=WaylandWindowDecorations")
+    fi
 fi
 
 cd /usr/lib/claude-cowork
-exec electron linux-loader.js --no-sandbox "$@"
+exec electron linux-loader.js "${ELECTRON_ARGS[@]}" --no-sandbox "$@"
 EOF
 
     # Install desktop entry
