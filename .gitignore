@@ -67,6 +67,11 @@ fix-structure.sh
 install-claude-linux.sh
 claude-launcher-fixed.sh
 
+# Fedora installer artifacts
+.fedora-install-backups/
+.fedora-extract-*
+.fedora-app-extracted/
+
 # Internal docs (may contain paths, session IDs, etc.)
 docs/plans/
 docs/logs/
