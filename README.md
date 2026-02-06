@@ -43,9 +43,11 @@ Claude Cowork is a special Claude Desktop build that works inside a folder you p
 
 ## ![](.github/assets/icons/checkbox-24x24.png) Requirements
 
-- **Linux x86_64** (tested on Arch Linux, kernel 6.17.9)
-- **Node.js / npm** (for Electron)
+- **Linux x86_64** (tested on Arch Linux and Fedora 43)
+- **Node.js 18+ / npm** (for Electron)
 - **p7zip** (to extract the macOS DMG)
+- **Electron** (installed via npm)
+- **bubblewrap** (`bwrap`) for sandbox isolation
 - **Claude Desktop DMG** (download from [claude.ai/download](https://claude.ai/download))
 - **Claude Max subscription** for Cowork access
 - **One-time sudo** (recommended) to create the `/sessions` symlink
@@ -54,25 +56,58 @@ Claude Cowork is a special Claude Desktop build that works inside a folder you p
 
 ## ![](.github/assets/icons/rocket-24x24.png) Quick Start
 
+Choose the installer that matches your distribution:
+
+### Option A: One-Click Installer (any distro)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/johnzfitch/claude-cowork-linux/master/install-oneclick.sh | bash
+```
+
+The one-click installer automatically detects your package manager (apt, pacman, dnf, zypper, nix), installs missing dependencies, downloads the Claude DMG, and sets everything up.
+
+### Option B: Fedora 43 + KDE/Wayland Installer
+
 ```bash
 # 1. Clone the repo
 git clone https://github.com/johnzfitch/claude-cowork-linux.git
 cd claude-cowork-linux
 
-# 2. Run the installer (provide path to Claude Desktop DMG)
-./install.sh ~/Downloads/Claude-*.dmg
+# 2. Place Claude.dmg in the repo directory (download from https://claude.ai/download)
 
-# 3. Launch
-./run.sh
+# 3. Run the Fedora installer
+./install-fedora.sh
 ```
 
-The installer will:
+The Fedora installer is purpose-built for **Fedora 43 + KDE Plasma 6.6 + Wayland**. It provides:
+- **Multi-step approval gates** — every phase requires explicit confirmation
+- **Automatic backups** with a manifest for rollback (`./install-fedora.sh --reverse`)
+- **Dry-run mode** to preview changes (`./install-fedora.sh --dry-run`)
+- **Wayland + KDE optimizations** — configures `electron-flags.conf`, enables server-side decorations, and GPU acceleration
+- **High verbosity logging** for full transparency
+
+### Option C: Manual Installer (Arch Linux / generic)
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/johnzfitch/claude-cowork-linux.git
+cd claude-cowork-linux
+
+# 2. Place the Claude DMG in the repo directory
+
+# 3. Run the installer
+./install.sh
+
+# 4. Launch
+claude
+```
+
+All installers will:
 - Extract the Claude Desktop app from the DMG
 - Apply Linux compatibility patches
-- Install our stub modules
-- Create required directories
-- Install Electron
-- Prompt once for `sudo` to create `/sessions` as a symlink into user space (required by the Claude Code binary)
+- Install stub modules that replace macOS-native binaries
+- Create required directories with secure permissions (700)
+- Prompt for `sudo` only when needed (e.g., creating `/usr/local/bin/claude` symlink)
 
 > [!IMPORTANT]
 > You must provide your own Claude Desktop DMG file. This repo does not include Anthropic's proprietary code.
@@ -205,18 +240,29 @@ claude-cowork-linux/
 ├── stubs/
 │   └── @ant/
 │       ├── claude-swift/
-│       │   └── js/index.js       # Swift addon stub (VM emulation)
+│       │   └── js/index.js          # Swift addon stub (VM emulation)
 │       └── claude-native/
-│           └── index.js          # Native utilities stub
+│           └── index.js             # Native utilities stub
+├── config/
+│   └── hyprland/claude.conf         # Hyprland window rules (optional)
+├── docs/                            # Additional documentation
 ├── .github/
-│   └── assets/icons/             # Documentation icons
-├── install.sh                    # Automated installer
-├── run.sh                        # Launch script
-├── debug.sh                      # Multi-window debug launcher
-└── README.md                     # This file
+│   └── assets/icons/                # Documentation icons
+├── install.sh                       # Manual installer (Arch Linux / generic)
+├── install-fedora.sh                # Fedora 43 + KDE/Wayland installer
+├── install-oneclick.sh              # One-click installer (any distro)
+├── linux-loader.js                  # Electron compatibility layer
+├── debug.sh                         # Multi-window debug launcher
+├── test-flow.sh                     # Pre-flight validation tests
+├── test-launch.sh                   # Test launcher
+├── test-launch-devtools.sh          # Test launcher with DevTools
+├── test-install-fedora.sh           # Fedora installer validation tests
+├── test-security.sh                 # Security verification tests
+├── PKGBUILD                         # Arch Linux package build file
+└── README.md                        # This file
 ```
 
-After running `install.sh`, the `app/` directory will contain the extracted Claude Desktop.
+After running any installer, the application is installed to `/Applications/Claude.app/`.
 
 > [!NOTE]
 > The installer automatically detects and extracts both `app.asar` (newer versions) and unpacked `app/` directories (older versions) from the DMG.

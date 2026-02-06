@@ -94,20 +94,18 @@ detect_pkg_manager() {
 # Dependency Installation
 # ============================================================
 
-install_dependencies() {
-
 # Portable file size formatter (replacement for numfmt)
 format_size() {
     local size=$1
     local units=("B" "KB" "MB" "GB" "TB")
     local unit=0
     local num=$size
-    
+
     while (( num > 1024 && unit < 4 )); do
         num=$((num / 1024))
         unit=$((unit + 1))
     done
-    
+
     echo "${num}${units[$unit]}"
 }
 
@@ -115,14 +113,14 @@ format_size() {
 verify_checksum() {
     local file_path="$1"
     local expected_sha256="${CLAUDE_DMG_SHA256:-}"
-    
+
     if [[ -z "$expected_sha256" ]]; then
         log_warn "No SHA256 checksum provided (set CLAUDE_DMG_SHA256=<hash> to verify)"
         log_info "Anthropic does not publish official checksums for Claude Desktop DMG"
         log_info "Download source: $DMG_URL_PRIMARY"
         return 0
     fi
-    
+
     log_info "Verifying SHA256 checksum..."
     local actual_sha256
     if command -v sha256sum >/dev/null 2>&1; then
@@ -133,14 +131,19 @@ verify_checksum() {
         log_warn "No SHA256 tool available (sha256sum or shasum required)"
         return 0
     fi
-    
+
     if [[ "$actual_sha256" != "$expected_sha256" ]]; then
         die "SHA256 checksum mismatch! Expected: $expected_sha256, Got: $actual_sha256"
     fi
-    
+
     log_success "SHA256 checksum verified"
 }
 
+# ============================================================
+# Dependency Installation
+# ============================================================
+
+install_dependencies() {
     log_info "Checking dependencies..."
 
     local pkg_manager

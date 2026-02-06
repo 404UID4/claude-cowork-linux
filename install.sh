@@ -2,7 +2,7 @@
 # install.sh - Complete Claude Linux installation
 # Creates exact macOS directory structure on Linux
 
-set -e
+set -euo pipefail
 
 VERSION="1.23.26"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -619,7 +619,7 @@ fi
 echo "[9/9] Cleaning up..."
 
 # Only remove extraction if we created it
-if [ -n "$EXTRACT_DIR" ] && [ -d "$EXTRACT_DIR" ]; then
+if [ -n "${EXTRACT_DIR:-}" ] && [ -d "${EXTRACT_DIR:-}" ]; then
   rm -rf "$EXTRACT_DIR"
   echo "✓ Temporary files removed"
 fi
