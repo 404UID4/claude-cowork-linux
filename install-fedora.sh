@@ -423,7 +423,9 @@ phase_preflight() {
     fi
     local dmg_size
     dmg_size=$(stat -c%s "$DMG_FILE" 2>/dev/null || echo 0)
-    log_success "Found: Claude.dmg ($(numfmt --to=iec "$dmg_size" 2>/dev/null || echo "${dmg_size} bytes"))"
+    local dmg_size_human
+    dmg_size_human=$(numfmt --to=iec "$dmg_size" 2>/dev/null || echo "${dmg_size} bytes")
+    log_success "Found: Claude.dmg ($dmg_size_human)"
 
     # Verify stubs exist in the repo
     log_step "Checking for Linux stubs..."
@@ -704,9 +706,6 @@ if [[ -n "${WAYLAND_DISPLAY:-}" ]] || [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]]
 
         # Server-side decorations for KDE 6.6
         ELECTRON_ARGS+=("--enable-features=WaylandWindowDecorations")
-
-        # Use the Wayland input method for KDE
-        ELECTRON_ARGS+=("--ozone-platform-hint=auto")
 
         # Enable Wayland IME support for KDE
         ELECTRON_ARGS+=("--enable-wayland-ime")
