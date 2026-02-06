@@ -81,6 +81,21 @@ die() {
     exit 1
 }
 
+# Portable file size formatter (replacement for numfmt)
+format_size() {
+    local size=$1
+    local units=("B" "KB" "MB" "GB" "TB")
+    local unit=0
+    local num=$size
+
+    while (( num > 1024 && unit < 4 )); do
+        num=$((num / 1024))
+        unit=$((unit + 1))
+    done
+
+    echo "${num}${units[$unit]}"
+}
+
 # Write to both console and log file
 log_to_file() {
     mkdir -p "$(dirname "$LOG_FILE")"
@@ -424,7 +439,7 @@ phase_preflight() {
     local dmg_size
     dmg_size=$(stat -c%s "$DMG_FILE" 2>/dev/null || echo 0)
     local dmg_size_human
-    dmg_size_human=$(numfmt --to=iec "$dmg_size" 2>/dev/null || echo "${dmg_size} bytes")
+    dmg_size_human=$(format_size "$dmg_size")
     log_success "Found: Claude.dmg ($dmg_size_human)"
 
     # Verify stubs exist in the repo
