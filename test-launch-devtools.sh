@@ -9,9 +9,15 @@ cd "$SCRIPT_DIR"
 export ELECTRON_ENABLE_LOGGING=1
 export CLAUDE_ENABLE_LOGGING=1
 
+ELECTRON_ARGS=()
+
 # Wayland support
 if [[ -n "$WAYLAND_DISPLAY" ]] || [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
   export ELECTRON_OZONE_PLATFORM_HINT=wayland
+  desktop_env="${XDG_CURRENT_DESKTOP:-}${XDG_SESSION_DESKTOP:-}${DESKTOP_SESSION:-}"
+  if [[ "${desktop_env,,}" == *kde* ]] || [[ "${desktop_env,,}" == *plasma* ]]; then
+    ELECTRON_ARGS+=("--enable-features=WaylandWindowDecorations")
+  fi
   echo "Wayland detected, using Ozone platform"
 fi
 
@@ -25,4 +31,4 @@ echo "=== TEST RUN WITH DEVTOOLS ===" > "$LOG_DIR/startup.log"
 # Launch with DevTools (--inspect enables Node.js inspector)
 exec ./squashfs-root/usr/lib/node_modules/electron/dist/electron \
   ./squashfs-root/usr/lib/node_modules/electron/dist/resources/app.asar \
-  --no-sandbox --inspect "$@" 2>&1 | tee -a "$LOG_DIR/startup.log"
+  "${ELECTRON_ARGS[@]}" --no-sandbox --inspect "$@" 2>&1 | tee -a "$LOG_DIR/startup.log"

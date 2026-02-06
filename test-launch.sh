@@ -20,9 +20,15 @@ fi
 # Enable logging
 export ELECTRON_ENABLE_LOGGING=1
 
+ELECTRON_ARGS=()
+
 # Wayland support for Hyprland, Sway, and other Wayland compositors
 if [[ -n "$WAYLAND_DISPLAY" ]] || [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
   export ELECTRON_OZONE_PLATFORM_HINT=wayland
+  desktop_env="${XDG_CURRENT_DESKTOP:-}${XDG_SESSION_DESKTOP:-}${DESKTOP_SESSION:-}"
+  if [[ "${desktop_env,,}" == *kde* ]] || [[ "${desktop_env,,}" == *plasma* ]]; then
+    ELECTRON_ARGS+=("--enable-features=WaylandWindowDecorations")
+  fi
   echo "Wayland detected, using Ozone platform"
 fi
 
@@ -33,4 +39,4 @@ mkdir -p ~/.local/share/claude-cowork/logs
 echo "Launching Claude Desktop..."
 exec ./squashfs-root/usr/lib/node_modules/electron/dist/electron \
   ./squashfs-root/usr/lib/node_modules/electron/dist/resources/app.asar \
-  --no-sandbox 2>&1 | tee -a ~/.local/share/claude-cowork/logs/startup.log
+  "${ELECTRON_ARGS[@]}" --no-sandbox 2>&1 | tee -a ~/.local/share/claude-cowork/logs/startup.log
